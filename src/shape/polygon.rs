@@ -1,7 +1,8 @@
 use qmath::prelude::*;
 use qmath::vec2::QVec2;
-use crate::shape::{QLine, ShapeCommon};
-use crate::shape::point::QPoint;
+use qmath::dir::QDir;
+use crate::algorithm::gjk;
+use super::{ QPoint, QLine, QBbox, QShapeCommon, QShapeType };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct QPolygon {
@@ -69,17 +70,43 @@ impl QPolygon {
         rst
     }
 
-    /// Get the simplex point of minkowski difference at giving direction.
-    pub fn get_simplex_point_in_direction(&self, other: &Self, dir: QVec2) -> QPoint {
-        let point_a = self.get_farest_point_in_direction(dir);
-        let point_b = other.get_farest_point_in_direction(-dir);
-        QPoint::new(point_a.pos().saturating_sub(point_b.pos()))
+    /// Get the first farest point of the shape in giving direction.
+    /// # Examples
+    /// ```
+    /// use qmath::prelude::*;
+    /// use qmath::vec2::QVec2;
+    /// use qmath::dir::QDir;
+    /// use qgeometry::prelude::*;
+    /// 
+    /// let shape = vec![
+    ///     QPoint::new(qvec2!(0.0, 0.0)),
+    ///     QPoint::new(qvec2!(1.0, 0.0)),
+    ///     QPoint::new(qvec2!(1.0, 1.0))
+    /// ];
+    /// let polygon = QPolygon::new(shape);
+    /// let dir = QDir::new_from_vec(qvec2!(1.0, 1.0));
+    /// let rst = polygon.get_farest_point_in_direction(dir);
+    /// assert!(rst.pos() == qvec2!(1.0, 1.0));
+    /// ```
+    pub fn get_farest_point_in_direction(&self, dir: QDir) -> QPoint {
+        *self.points
+            .iter()
+            .max_by(|a, b| {
+                let dot_a: Q64 = a.pos().dot(dir.to_vec());
+                let dot_b: Q64 = b.pos().dot(dir.to_vec());
+                dot_a.partial_cmp(&dot_b).unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .expect("[get_farest_point_in_direction] Shape must not be empty.")
     }
 }
 
-impl ShapeCommon for QPolygon {
-    fn points(&self) -> &Vec<QPoint> {
-        &self.points
+impl QShapeCommon for QPolygon {
+    fn points(&self) -> Vec<QPoint> {
+        self.points.clone()
+    }
+
+    fn get_shape_type(&self) -> QShapeType {
+        QShapeType::QPolygon
     }
 
     /// Get centroid of the shape.
@@ -123,8 +150,8 @@ impl ShapeCommon for QPolygon {
         let mut sum_diff_x = Q64::ZERO;
         let mut sum_diff_y = Q64::ZERO;
         for point in &self.points {
-            sum_diff_x = sum_diff_x.saturating_add(point.pos().x.saturating_sub(baseline_x));
-            sum_diff_y = sum_diff_y.saturating_add(point.pos().y.saturating_sub(baseline_y));
+            sum_diff_x = sum_diff_x.saturating_add(point.x().saturating_sub(baseline_x));
+            sum_diff_y = sum_diff_y.saturating_add(point.y().saturating_sub(baseline_y));
         }
 
         let sum_diff_avg_x = sum_diff_x.saturating_div(q64!(n));
@@ -132,34 +159,6 @@ impl ShapeCommon for QPolygon {
         let centroid_x = baseline_x.saturating_add(sum_diff_avg_x);
         let centroid_y = baseline_y.saturating_add(sum_diff_avg_y);
         return QPoint::new_from_parts(centroid_x, centroid_y);
-    }
-
-    /// Get the first farest point of the shape in giving direction.
-    /// # Examples
-    /// ```
-    /// use qmath::prelude::*;
-    /// use qmath::vec2::QVec2;
-    /// use qgeometry::prelude::*;
-    /// 
-    /// let shape = vec![
-    ///     QPoint::new(qvec2!(0.0, 0.0)),
-    ///     QPoint::new(qvec2!(1.0, 0.0)),
-    ///     QPoint::new(qvec2!(1.0, 1.0))
-    /// ];
-    /// let polygon = QPolygon::new(shape);
-    /// let dir = qvec2!(1.0, 1.0);
-    /// let rst = polygon.get_farest_point_in_direction(dir);
-    /// assert!(rst.pos() == qvec2!(1.0, 1.0));
-    /// ```
-    fn get_farest_point_in_direction(&self, dir: QVec2) -> QPoint {
-        *self.points
-            .iter()
-            .max_by(|a, b| {
-                let dot_a: Q64 = a.pos().dot(dir);
-                let dot_b: Q64 = b.pos().dot(dir);
-                dot_a.partial_cmp(&dot_b).unwrap_or(std::cmp::Ordering::Equal)
-            })
-            .expect("[get_farest_point_in_direction] Shape must not be empty.")
     }
 
     /// Return true if the point is inside the shape.
@@ -213,10 +212,10 @@ impl ShapeCommon for QPolygon {
                 return true;
             }
 
-            let py: Q64 = point.pos().y;
+            let py: Q64 = point.y();
             if (vi.y > py) != (vj.y > py) {
                 let intersect_x: Q64 = line.get_x_at_y(py);
-                let px: Q64 = point.pos().x;
+                let px: Q64 = point.x();
                 if px < intersect_x {
                     rst = !rst;
                 }
@@ -287,5 +286,19 @@ impl ShapeCommon for QPolygon {
         triangles_indices.push(get_index(points[0]));
 
         triangles_indices
+    }
+
+    fn get_bbox(&self) -> QBbox {
+        unimplemented!()
+    }
+
+    fn is_collide(&self, other: &impl QShapeCommon) -> bool {
+        let other_shape_type = other.get_shape_type();
+        match other_shape_type {
+            _ => {
+                let other_polygon = QPolygon::new(other.points());
+                gjk(self, &other_polygon)
+            }
+        }
     }
 }

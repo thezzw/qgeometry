@@ -10,11 +10,32 @@ pub use bbox::QBbox;
 pub use circle::QCircle;
 pub use polygon::QPolygon;
 
-use qmath::vec2::QVec2;
-pub trait ShapeCommon {
-    fn points(&self) -> &Vec<QPoint>;
+pub enum QShapeType {
+    QPoint,
+    QLine,
+    QBbox,
+    QCircle,
+    QPolygon,
+}
+
+pub trait QShapeCommon {
+    fn points(&self) -> Vec<QPoint>;
+
+    fn get_bbox(&self) -> QBbox;
+
     fn get_centroid(&self) -> QPoint;
-    fn get_farest_point_in_direction(&self, dir: QVec2) -> QPoint;
+
+    fn get_shape_type(&self) -> QShapeType;
+
     fn is_point_inside(&self, point: &QPoint) -> bool;
-    fn ear_clipping_triangulation(&self) -> Vec<usize>;
+
+    fn is_collide(&self, other: &impl QShapeCommon) -> bool;
+
+    fn get_polygon(&self) -> QPolygon {
+        QPolygon::new(self.points().to_vec())
+    }
+
+    fn ear_clipping_triangulation(&self) -> Vec<usize> {
+        self.get_polygon().ear_clipping_triangulation()
+    }
 }

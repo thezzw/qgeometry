@@ -1,6 +1,8 @@
 use qmath::prelude::*;
 use qmath::vec2::QVec2;
-use crate::shape::point::QPoint;
+use qmath::dir::QDir;
+use crate::algorithm::gjk;
+use super::{ QPoint, QBbox, QPolygon, QShapeCommon, QShapeType };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct QLine {
@@ -10,6 +12,7 @@ pub struct QLine {
 
 impl QLine {
     pub fn new(start: QPoint, end: QPoint) -> Self {
+        assert!(start != end, "[QLine::new] start({start:?}) should not be equal to end({end:?}).");
         Self {
             start,
             end,
@@ -17,10 +20,7 @@ impl QLine {
     }
 
     pub fn new_from_parts(start: QVec2, end: QVec2) -> Self {
-        Self {
-            start: QPoint::new(start),
-            end: QPoint::new(end),
-        }
+        Self::new(QPoint::new(start), QPoint::new(end))
     }
 
     pub fn new_from_zero(end: QPoint) -> Self {
@@ -62,16 +62,16 @@ impl QLine {
         self.vector().dot(other.vector()) < 0
     }
 
-    pub fn get_perpendicular_dir(&self) -> QVec2 {
+    pub fn get_perpendicular_dir(&self) -> QDir {
         let start_pos = self.start.pos();
         let end_pos = self.end.pos();
-        QVec2::new(end_pos.y.saturating_sub(start_pos.y), -(end_pos.x.saturating_sub(start_pos.x))).normalize()
+        QDir::new_from_vec(QVec2::new(end_pos.y.saturating_sub(start_pos.y), -(end_pos.x.saturating_sub(start_pos.x))))
     }
 
     /// Get perpendicular direction towards the origin.
-    pub fn get_perpendicular_dir_to_origin(&self) -> QVec2 {
+    pub fn get_perpendicular_dir_to_origin(&self) -> QDir {
         let rst = self.get_perpendicular_dir();
-        if rst.dot(-self.start.pos()) >= 0 { rst } else { -rst }
+        if rst.to_vec().dot(-self.start.pos()) >= 0 { rst } else { -rst }
     }
 
     /// Get the perpendicular vector from a point.
@@ -213,5 +213,48 @@ impl QLine {
         vj.y.saturating_sub(vi.y).saturating_mul(
             x.saturating_sub(vi.x).saturating_div(vj.x.saturating_sub(vi.x))
         ).saturating_add(vi.y)
+    }
+}
+
+impl QShapeCommon for QLine {
+    fn points(&self) -> Vec<QPoint> {
+        vec![self.start, self.end]
+    }
+
+    fn get_bbox(&self) -> QBbox {
+        let mut left_bottom = self.start.pos().min(self.end.pos());
+        let mut right_top = self.start.pos().max(self.end.pos());
+        if left_bottom.x == right_top.x {
+            left_bottom.x = left_bottom.x.saturating_sub(Q64::EPS);
+            right_top.x = right_top.x.saturating_add(Q64::EPS);
+        }
+        if left_bottom.y == right_top.y {
+            left_bottom.y = left_bottom.y.saturating_sub(Q64::EPS);
+            right_top.y = right_top.y.saturating_add(Q64::EPS);
+        }
+        QBbox::new_from_parts(left_bottom, right_top)
+    }
+
+    fn get_centroid(&self) -> QPoint {
+        QPoint::new(self.start.pos().midpoint(self.end.pos()))
+    }
+
+    fn get_shape_type(&self) -> QShapeType {
+        QShapeType::QLine
+    }
+
+    fn is_point_inside(&self, point: &QPoint) -> bool {
+        self.is_point_on_line(point)
+    }
+
+    fn is_collide(&self, other: &impl QShapeCommon) -> bool {
+        let other_shape_type = other.get_shape_type();
+        match other_shape_type {
+            _ => {
+                let my_polygon = QPolygon::new(self.points());
+                let other_polygon = QPolygon::new(other.points());
+                gjk(&my_polygon, &other_polygon)
+            }
+        }
     }
 }
