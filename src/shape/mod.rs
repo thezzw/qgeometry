@@ -10,6 +10,7 @@ pub use bbox::QBbox;
 pub use circle::QCircle;
 pub use polygon::QPolygon;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum QShapeType {
     QPoint,
     QLine,
