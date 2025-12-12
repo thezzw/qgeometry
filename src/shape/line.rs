@@ -38,6 +38,22 @@ impl QLine {
         self.end
     }
 
+    pub fn start_mut(&mut self) -> &mut QPoint {
+        &mut self.start
+    }
+
+    pub fn end_mut(&mut self) -> &mut QPoint {
+        &mut self.end
+    }
+
+    pub fn set_start(&mut self, start: QPoint) {
+        self.start = start;
+    }
+
+    pub fn set_end(&mut self, end: QPoint) {
+        self.end = end;
+    }
+
     pub fn vector(&self) -> QVec2 {
         self.end.pos().saturating_sub(self.start.pos())
     }

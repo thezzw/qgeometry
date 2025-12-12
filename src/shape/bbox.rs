@@ -33,6 +33,22 @@ impl QBbox {
         self.right_top
     }
 
+    pub fn left_bottom_mut(&mut self) -> &mut QPoint {
+        &mut self.left_bottom
+    }
+
+    pub fn right_top_mut(&mut self) -> &mut QPoint {
+        &mut self.right_top
+    }
+
+    pub fn set_left_bottom(&mut self, left_bottom: QPoint) {
+        self.left_bottom = left_bottom;
+    }
+
+    pub fn set_right_top(&mut self, right_top: QPoint) {
+        self.right_top = right_top;
+    }
+
     pub fn width(&self) -> Q64 {
         self.right_top.x().saturating_sub(self.left_bottom.x())
     }

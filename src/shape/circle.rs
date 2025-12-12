@@ -25,6 +25,22 @@ impl QCircle {
     pub fn radius(&self) -> Q64 {
         self.radius
     }
+
+    pub fn center_mut(&mut self) -> &mut QPoint {
+        &mut self.center
+    }
+
+    pub fn radius_mut(&mut self) -> &mut Q64 {
+        &mut self.radius
+    }
+
+    pub fn set_center(&mut self, center: QPoint) {
+        self.center = center;
+    }
+
+    pub fn set_radius(&mut self, radius: Q64) {
+        self.radius = radius;
+    }
 }
 
 impl QShapeCommon for QCircle {

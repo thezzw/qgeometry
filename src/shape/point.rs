@@ -3,7 +3,7 @@ use qmath::vec2::QVec2;
 use crate::algorithm::gjk;
 use super::{ QBbox, QPolygon, QShapeCommon, QShapeType };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash)]
 pub struct QPoint {
     pos: QVec2,
 }
@@ -31,6 +31,30 @@ impl QPoint {
 
     pub fn y(&self) -> Q64 {
         self.pos.y
+    }
+
+    pub fn pos_mut(&mut self) -> &mut QVec2 {
+        &mut self.pos
+    }
+
+    pub fn x_mut(&mut self) -> &mut Q64 {
+        &mut self.pos.x
+    }
+
+    pub fn y_mut(&mut self) -> &mut Q64 {
+        &mut self.pos.y
+    }
+
+    pub fn set_pos(&mut self, pos: QVec2) {
+        self.pos = pos;
+    }
+
+    pub fn set_x(&mut self, x: Q64) {
+        self.pos.x = x;
+    }
+
+    pub fn set_y(&mut self, y: Q64) {
+        self.pos.y = y;
     }
 
     pub fn distance(&self, other: &QPoint) -> Q64 {

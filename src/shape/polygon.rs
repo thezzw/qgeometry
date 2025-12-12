@@ -22,6 +22,14 @@ impl QPolygon {
         }
     }
 
+    pub fn points(&self) -> &Vec<QPoint> {
+        &self.points
+    }
+
+    pub fn points_mut(&mut self) -> &mut Vec<QPoint> {
+        &mut self.points
+    }
+
     /// Get the cloest line to the origin.
     /// # Examples
     /// ```
