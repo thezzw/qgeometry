@@ -9,6 +9,7 @@ pub use line::QLine;
 pub use bbox::QBbox;
 pub use circle::QCircle;
 pub use polygon::QPolygon;
+use qmath::vec2::QVec2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum QShapeType {
@@ -31,6 +32,8 @@ pub trait QShapeCommon {
     fn is_point_inside(&self, point: &QPoint) -> bool;
 
     fn is_collide(&self, other: &impl QShapeCommon) -> bool;
+
+    fn try_get_seperation_vector(&self, other: &impl QShapeCommon) -> Option<QVec2>;
 
     fn get_polygon(&self) -> QPolygon {
         QPolygon::new(self.points().to_vec())

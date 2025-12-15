@@ -279,3 +279,47 @@ fn test_get_minkowski_difference_triangle() {
     // The result should be a hexagon (Minkowski difference of two triangles)
     assert_eq!(diff_points.len(), 6);
 }
+
+#[test]
+fn test_epa_simple() {
+    // Test EPA with two overlapping squares
+    let square1 = QPolygon::new_from_parts(vec![
+        qvec2!(0.0, 0.0),
+        qvec2!(1.0, 0.0),
+        qvec2!(1.0, 1.0),
+        qvec2!(0.0, 1.0),
+    ]);
+    
+    let square2 = QPolygon::new_from_parts(vec![
+        qvec2!(0.5, 0.5),
+        qvec2!(1.5, 0.5),
+        qvec2!(1.5, 1.5),
+        qvec2!(0.5, 1.5),
+    ]);
+    
+    let separation_vector = epa(&square1, &square2);
+    // Should return some separation vector since the shapes overlap
+    assert!(separation_vector.is_some());
+}
+
+#[test]
+fn test_epa_no_collision() {
+    // Test EPA with two non-overlapping squares
+    let square1 = QPolygon::new_from_parts(vec![
+        qvec2!(0.0, 0.0),
+        qvec2!(1.0, 0.0),
+        qvec2!(1.0, 1.0),
+        qvec2!(0.0, 1.0),
+    ]);
+    
+    let square2 = QPolygon::new_from_parts(vec![
+        qvec2!(2.0, 0.0),
+        qvec2!(3.0, 0.0),
+        qvec2!(3.0, 1.0),
+        qvec2!(2.0, 1.0),
+    ]);
+    
+    let separation_vector = epa(&square1, &square2);
+    // Should return None since the shapes don't overlap
+    assert!(separation_vector.is_none());
+}

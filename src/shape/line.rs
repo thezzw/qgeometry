@@ -1,7 +1,7 @@
 use qmath::prelude::*;
 use qmath::vec2::QVec2;
 use qmath::dir::QDir;
-use crate::algorithm::gjk;
+use crate::algorithm::{epa, gjk};
 use super::{ QPoint, QBbox, QPolygon, QShapeCommon, QShapeType };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -270,6 +270,17 @@ impl QShapeCommon for QLine {
                 let my_polygon = QPolygon::new(self.points());
                 let other_polygon = QPolygon::new(other.points());
                 gjk(&my_polygon, &other_polygon)
+            }
+        }
+    }
+
+    fn try_get_seperation_vector(&self, other: &impl QShapeCommon) -> Option<QVec2> {
+        let other_shape_type = other.get_shape_type();
+        match other_shape_type {
+            _ => {
+                let my_polygon = QPolygon::new(self.points());
+                let other_polygon = QPolygon::new(other.points());
+                epa(&my_polygon, &other_polygon)
             }
         }
     }

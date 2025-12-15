@@ -29,6 +29,30 @@ pub fn gjk(shape_a: &QPolygon, shape_b: &QPolygon) -> bool {
     minkowski_difference.is_point_inside(&QPoint::ZERO)
 }
 
+/// EPA algorithm.
+/// 
+/// This function computes the penetration depth and direction between two convex polygons
+/// that are known to be intersecting (using GJK).
+/// 
+/// # Arguments
+/// 
+/// * `shape_a` - First polygon
+/// * `shape_b` - Second polygon
+/// 
+/// # Returns
+/// 
+/// Separation vector for shape_b (direction and magnitude of penetration)
+pub fn epa(shape_a: &QPolygon, shape_b: &QPolygon) -> Option<QVec2> {
+    let minkowski_difference = get_minkowski_difference(shape_a, shape_b);
+    if minkowski_difference.is_point_inside(&QPoint::ZERO) {
+        let nearest_lines_index = minkowski_difference.get_nearest_lines_index_to_point(&QPoint::ZERO);
+        assert!(nearest_lines_index.len() >= 2, "[algorithm::epa] Nearest lines index must have at least 2 elements, shape_a: {:?}, shape_b: {:?}, minksowski_difference: {:?}", shape_a, shape_b, minkowski_difference);
+        let line = QLine::new(minkowski_difference.points()[nearest_lines_index[0]], minkowski_difference.points()[nearest_lines_index[1]]);
+        return Some(line.get_perpendicular_vector_from_point(&QPoint::ZERO));
+    }
+    None
+}
+
 /// Calculate the Minkowski difference of two convex polygons.
 /// 
 /// The Minkowski difference of two shapes A and B is defined as the set of all points a - b
