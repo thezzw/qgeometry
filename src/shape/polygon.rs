@@ -297,7 +297,23 @@ impl QShapeCommon for QPolygon {
     }
 
     fn get_bbox(&self) -> QBbox {
-        unimplemented!()
+        assert!(!self.points.is_empty(), "[QPolygon::get_bbox] Points must not be empty.");
+
+        let mut min_x = self.points[0].x().saturating_sub(Q64::EPS);
+        let mut max_x = self.points[0].x().saturating_add(Q64::EPS);
+        let mut min_y = self.points[0].y().saturating_sub(Q64::EPS);
+        let mut max_y = self.points[0].y().saturating_add(Q64::EPS);
+
+        for point in &self.points {
+            min_x = min_x.min(point.x());
+            max_x = max_x.max(point.x());
+            min_y = min_y.min(point.y());
+            max_y = max_y.max(point.y());
+        }
+
+        let left_bottom = QPoint::new_from_parts(min_x, min_y);
+        let right_top = QPoint::new_from_parts(max_x, max_y);
+        QBbox::new(left_bottom, right_top)
     }
 
     fn is_collide(&self, other: &impl QShapeCommon) -> bool {
