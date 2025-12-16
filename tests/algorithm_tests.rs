@@ -132,7 +132,7 @@ fn test_graham_scan_simple() {
         qvec2!(0.0, 1.0),
     ];
     
-    let hull = graham_scan(&points);
+    let hull = andrew_graham_scan(&points);
     assert_eq!(hull.len(), 4);
     // Check that all expected points are in the hull
     assert!(hull.contains(&qvec2!(0.0, 0.0)));
@@ -153,7 +153,7 @@ fn test_graham_scan_with_duplicates() {
         qvec2!(1.0, 0.0), // duplicate
     ];
     
-    let hull = graham_scan(&points);
+    let hull = andrew_graham_scan(&points);
     assert_eq!(hull.len(), 4);
     // Check that all expected points are in the hull
     assert!(hull.contains(&qvec2!(0.0, 0.0)));
@@ -171,7 +171,7 @@ fn test_graham_scan_triangle() {
         qvec2!(0.5, 1.0),
     ];
     
-    let hull = graham_scan(&points);
+    let hull = andrew_graham_scan(&points);
     assert_eq!(hull.len(), 3);
     // Check that all expected points are in the hull
     assert!(hull.contains(&qvec2!(0.0, 0.0)));
@@ -190,7 +190,7 @@ fn test_graham_scan_colinear() {
         qvec2!(0.0, 1.0),
     ];
     
-    let hull = graham_scan(&points);
+    let hull = andrew_graham_scan(&points);
     // Should have 4 points for the convex hull (colinear points in the middle of an edge are removed)
     assert_eq!(hull.len(), 4);
     assert!(hull.contains(&qvec2!(0.0, 0.0)));

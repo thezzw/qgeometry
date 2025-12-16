@@ -74,69 +74,60 @@ pub fn get_minkowski_difference(shape_a: &QPolygon, shape_b: &QPolygon) -> QPoly
             all_diff_points.push(pa.pos().saturating_sub(pb.pos()))
         )
     );
-    QPolygon::new_from_parts(graham_scan(&all_diff_points))
+    QPolygon::new_from_parts(andrew_graham_scan(&all_diff_points))
 }
 
-/// Graham scan algorithm.
+/// Andrew's monotone chain convex hull algorithm.
 /// 
 /// # Returns
 /// 
 /// The convex hull of the points.
-pub fn graham_scan(points: &Vec<QVec2>) -> Vec<QVec2> {
+pub fn andrew_graham_scan(points: &Vec<QVec2>) -> Vec<QVec2> {
     use std::collections::HashSet;
     let mut unique_points: Vec<QVec2> = points.into_iter().collect::<HashSet<_>>().into_iter().map(|p| *p).collect();
 
-    if unique_points.len() < 3 {
+    let n = unique_points.len();
+    if n <= 2 {
         return unique_points;
     }
 
-    // Find the point with the lowest y-coordinate (and leftmost if there are ties)\
-    use std::cmp::Ordering;
-    unique_points.sort_unstable_by(|a, b| {
-        let y_rst = a.y.partial_cmp(&b.y).unwrap_or(Ordering::Equal);
-        if y_rst != Ordering::Equal {
-            y_rst
-        } else {
-            a.x.partial_cmp(&b.x).unwrap_or(Ordering::Equal)
-        }
-    });
-    let pivot = unique_points[0];
-
-    // Sort the points by polar angle with respect to the pivot
-    unique_points.sort_by(|a: &QVec2, b| {
-        if *b == pivot { return Ordering::Greater; }
-        if *a == pivot { return Ordering::Less; }
-
-        let angle_bp: Q64 = b.saturating_sub(pivot).to_angle();
-        let angle_ap: Q64 = a.saturating_sub(pivot).to_angle();
-        let angle_diff: Q64 = angle_bp.saturating_sub(angle_ap);
-        if angle_diff < Q64::ZERO {
-            Ordering::Less
-        } else if angle_diff > Q64::ZERO {
-            Ordering::Greater
-        } else {
-            // If the angles are equal, compare distances
-            a.saturating_sub(pivot).length_squared().partial_cmp(&b.saturating_sub(pivot).length_squared()).unwrap_or(Ordering::Equal)
-        }
+    // Sort points lexicographically (first by x, then by y)
+    unique_points.sort_by(|a, b| {
+        a.x.partial_cmp(&b.x)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.y.partial_cmp(&b.y).unwrap_or(std::cmp::Ordering::Equal))
     });
 
-    // Initialize the stack with the first two points
-    let mut stack = Vec::with_capacity(unique_points.len());
-    stack.push(unique_points[0]);
-    stack.push(unique_points[1]);
-
-    // Process the remaining points
-    for i in 2..unique_points.len() {
-        while stack.len() >= 2 {
-            let next_to_top = stack[stack.len() - 2];
-            let top = stack[stack.len() - 1];
-            if (unique_points[i] - next_to_top).cross(top - next_to_top) > Q64::ZERO {
-                break;
-            }
-            stack.pop();
-        }
-        stack.push(unique_points[i]);
+    /// Computes the 2D cross product of OA and OB vectors, i.e. z-component of their 3D cross product.
+    /// Returns a positive value, if OAB makes a counter-clockwise turn,
+    /// negative for clockwise turn, and zero if the points are collinear.
+    fn cross(o: &QVec2, a: &QVec2, b: &QVec2) -> Q64 {
+        (a.saturating_sub(*o)).cross(b.saturating_sub(*o))
     }
 
-    stack
+    // Build lower hull
+    let mut lower = Vec::with_capacity(n);
+    for p in &unique_points {
+        while lower.len() >= 2 && cross(&lower[lower.len()-2], &lower[lower.len()-1], p) <= Q64::ZERO {
+            lower.pop();
+        }
+        lower.push(*p);
+    }
+
+    // Build upper hull
+    let mut upper = Vec::with_capacity(n);
+    for p in unique_points.iter().rev() {
+        while upper.len() >= 2 && cross(&upper[upper.len()-2], &upper[upper.len()-1], p) <= Q64::ZERO {
+            upper.pop();
+        }
+        upper.push(*p);
+    }
+
+    // Remove last point of each half because it's repeated
+    lower.pop();
+    upper.pop();
+
+    // Concatenate lower and upper hull
+    lower.extend(upper);
+    lower
 }
