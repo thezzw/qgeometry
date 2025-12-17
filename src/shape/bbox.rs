@@ -1,9 +1,10 @@
 use qmath::prelude::*;
 use qmath::vec2::QVec2;
+use serde::{Deserialize, Serialize};
 use crate::algorithm::{epa, gjk};
 use super::{ QPoint, QPolygon, QShapeCommon, QShapeType };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct QBbox {
     left_bottom: QPoint,
     right_top: QPoint,

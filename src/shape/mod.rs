@@ -10,8 +10,9 @@ pub use bbox::QBbox;
 pub use circle::QCircle;
 pub use polygon::QPolygon;
 use qmath::vec2::QVec2;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum QShapeType {
     QPoint,
     QLine,

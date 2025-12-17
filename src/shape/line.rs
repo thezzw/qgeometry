@@ -1,10 +1,11 @@
 use qmath::prelude::*;
 use qmath::vec2::QVec2;
 use qmath::dir::QDir;
+use serde::{Deserialize, Serialize};
 use crate::algorithm::{epa, gjk};
 use super::{ QPoint, QBbox, QPolygon, QShapeCommon, QShapeType };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct QLine {
     start: QPoint,
     end: QPoint,

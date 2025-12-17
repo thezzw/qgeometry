@@ -1,10 +1,11 @@
 use qmath::prelude::*;
 use qmath::vec2::QVec2;
 use qmath::dir::QDir;
+use serde::{Deserialize, Serialize};
 use crate::algorithm::{epa, gjk};
 use super::{ QPoint, QLine, QBbox, QShapeCommon, QShapeType };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct QPolygon {
     points: Vec<QPoint>,
 }
